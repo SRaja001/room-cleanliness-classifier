@@ -1,0 +1,28 @@
+[project]
+name = "room-cleanliness-classifier"
+version = "0.1.0"
+description = "Internal MCP-backed room cleanliness classifier."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "boto3>=1.39.0,<2.0.0",
+  "fastapi>=0.116.0,<1.0.0",
+  "pydantic>=2.11.0,<3.0.0",
+  "uvicorn>=0.35.0,<1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "httpx>=0.28.0,<1.0.0",
+  "pytest>=8.4.0,<9.0.0",
+]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.setuptools]
+packages = ["app"]
