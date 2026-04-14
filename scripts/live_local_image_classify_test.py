@@ -21,12 +21,19 @@ def main() -> int:
         aws_integration_enabled=True,
         s3_enabled=True,
         rekognition_enabled=True,
-        bedrock_enabled=False,
+        bedrock_enabled=os.getenv("BEDROCK_ENABLED", "false").lower() == "true",
         dynamodb_enabled=True,
         aws_region=os.getenv("AWS_REGION", "us-east-1"),
         s3_bucket_name=os.getenv("S3_BUCKET_NAME", "unset-bucket"),
         dynamodb_table_name=os.getenv(
             "DYNAMODB_TABLE_NAME", "room-cleanliness-predictions-dev"
+        ),
+        bedrock_model_id=os.getenv("BEDROCK_MODEL_ID", "amazon.nova-lite-v1:0"),
+        bedrock_input_cost_per_million_tokens=float(
+            os.getenv("BEDROCK_INPUT_COST_PER_MILLION_TOKENS", "0.06")
+        ),
+        bedrock_output_cost_per_million_tokens=float(
+            os.getenv("BEDROCK_OUTPUT_COST_PER_MILLION_TOKENS", "0.24")
         ),
         minimum_brightness=float(os.getenv("MINIMUM_BRIGHTNESS", "35")),
         minimum_sharpness=float(os.getenv("MINIMUM_SHARPNESS", "25")),
@@ -54,6 +61,8 @@ def main() -> int:
     print(f"Recommended action: {body.get('recommended_action')}")
     print(f"Image quality: {body.get('image_quality')}")
     print(f"Visible reasons: {body.get('visible_reasons')}")
+    print(f"Model version: {body.get('model_version')}")
+    print(f"Model usage: {body.get('model_usage')}")
     return 0
 
 

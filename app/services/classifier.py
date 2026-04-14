@@ -1,10 +1,7 @@
 from app.core.config import AppConfig
 from app.models.contracts import (
-    ClassificationLabel,
     ClassifyRoomRequest,
     ClassifyRoomResponse,
-    ImageQualityResult,
-    RecommendedAction,
 )
 from app.services.bedrock import BedrockVisionClient
 from app.services.policy import ReviewPolicy
@@ -42,12 +39,12 @@ class ClassifierService:
             image_base64=request.image_base64 or ""
         )
         quality = self.rekognition_client.assess_image_quality(image_reference=image_reference)
-        label, confidence, reasons = self.bedrock_client.analyze_cleanliness(
+        model_result = self.bedrock_client.analyze_cleanliness(
             image_reference=image_reference
         )
         decision = self.review_policy.apply(
-            initial_label=label,
-            confidence=confidence,
+            initial_label=model_result.classification,
+            confidence=model_result.confidence,
             quality=quality,
         )
         response = ClassifyRoomResponse(
@@ -56,9 +53,10 @@ class ClassifierService:
             confidence=decision["confidence"],
             needs_review=decision["needs_review"],
             recommended_action=decision["recommended_action"],
-            visible_reasons=reasons,
+            visible_reasons=model_result.visible_reasons,
             image_quality=quality,
-            model_version="placeholder-v1",
+            model_version=model_result.model_version,
+            model_usage=model_result.usage,
         )
         saved_record = self.repository.save_prediction(
             {

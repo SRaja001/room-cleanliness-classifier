@@ -65,6 +65,13 @@ class ImageQualityResult(BaseModel):
     retake_guidance: str
 
 
+class ModelUsage(BaseModel):
+    input_tokens: int = 0
+    output_tokens: int = 0
+    total_tokens: int = 0
+    estimated_cost_usd: float = Field(default=0.0, ge=0.0)
+
+
 class ClassifyRoomResponse(BaseModel):
     prediction_id: str
     classification: ClassificationLabel
@@ -74,6 +81,7 @@ class ClassifyRoomResponse(BaseModel):
     visible_reasons: list[str]
     image_quality: ImageQualityResult
     model_version: str
+    model_usage: ModelUsage
 
 
 class AdminReviewRequest(BaseModel):

@@ -18,7 +18,9 @@ class AppConfig(BaseModel):
     s3_bucket_name: str = "room-cleanliness-classifier-dev"
     s3_key_prefix: str = "uploads"
     dynamodb_table_name: str = "room-cleanliness-predictions-dev"
-    bedrock_model_id: str = "anthropic.claude-3-haiku-20240307-v1:0"
+    bedrock_model_id: str = "amazon.nova-lite-v1:0"
+    bedrock_input_cost_per_million_tokens: float = 0.06
+    bedrock_output_cost_per_million_tokens: float = 0.24
     clean_confidence_threshold: float = 0.85
     minimum_brightness: float = 35.0
     minimum_sharpness: float = 25.0
@@ -62,6 +64,18 @@ class AppConfig(BaseModel):
             ),
             bedrock_model_id=os.getenv(
                 "BEDROCK_MODEL_ID", cls.model_fields["bedrock_model_id"].default
+            ),
+            bedrock_input_cost_per_million_tokens=float(
+                os.getenv(
+                    "BEDROCK_INPUT_COST_PER_MILLION_TOKENS",
+                    cls.model_fields["bedrock_input_cost_per_million_tokens"].default,
+                )
+            ),
+            bedrock_output_cost_per_million_tokens=float(
+                os.getenv(
+                    "BEDROCK_OUTPUT_COST_PER_MILLION_TOKENS",
+                    cls.model_fields["bedrock_output_cost_per_million_tokens"].default,
+                )
             ),
             clean_confidence_threshold=float(
                 os.getenv(
