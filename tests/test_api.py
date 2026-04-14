@@ -36,6 +36,8 @@ def test_classify_endpoint_returns_contract_shape() -> None:
     assert body["needs_review"] is True
     assert "visible_reasons" in body
     assert body["image_quality"]["is_acceptable"] is True
+    assert body["model_usage"]["input_tokens"] == 0
+    assert body["model_usage"]["estimated_cost_usd"] == 0.0
 
 
 def test_classify_endpoint_requires_an_image_reference() -> None:

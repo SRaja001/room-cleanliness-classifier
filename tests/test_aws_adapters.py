@@ -1,5 +1,5 @@
 from app.core.config import AppConfig
-from app.models.contracts import ImageQualityResult
+from app.models.contracts import ClassificationLabel, ImageQualityResult
 from app.services.bedrock import BedrockVisionClient
 from app.services.rekognition import RekognitionClient
 from app.services.storage import (
@@ -61,7 +61,36 @@ class FakeBedrockClient:
                         }
                     ]
                 }
-            }
+            },
+            "usage": {
+                "inputTokens": 1000,
+                "outputTokens": 250,
+                "totalTokens": 1250,
+            },
+        }
+
+
+class FakeUnsupportedSceneBedrockClient:
+    def converse(self, **kwargs) -> dict[str, object]:
+        return {
+            "output": {
+                "message": {
+                    "content": [
+                        {
+                            "text": (
+                                '{"supported_scene":false,"scene_type":"hallway",'
+                                '"classification":"clean","confidence":0.88,'
+                                '"visible_reasons":["Bright hallway","No clutter"]}'
+                            )
+                        }
+                    ]
+                }
+            },
+            "usage": {
+                "inputTokens": 900,
+                "outputTokens": 120,
+                "totalTokens": 1020,
+            },
         }
 
 
@@ -118,13 +147,46 @@ def test_bedrock_client_parses_structured_response() -> None:
         storage_client=storage,
     )
 
-    classification, confidence, reasons = client.analyze_cleanliness(
+    result = client.analyze_cleanliness(
         image_reference="s3://test-bucket/uploads/image.jpg"
     )
 
-    assert classification.value == "dirty"
-    assert confidence == 0.97
-    assert reasons == ["Visible trash", "Unmade bed"]
+    assert result.classification == ClassificationLabel.DIRTY
+    assert result.confidence == 0.97
+    assert result.visible_reasons == ["Visible trash", "Unmade bed"]
+    assert result.usage.input_tokens == 1000
+    assert result.usage.output_tokens == 250
+    assert result.usage.total_tokens == 1250
+    assert result.usage.estimated_cost_usd == 0.00012
+    assert result.model_version == "test-model"
+
+
+def test_bedrock_client_forces_unsupported_scene_to_borderline() -> None:
+    config = AppConfig(
+        aws_integration_enabled=True,
+        bedrock_enabled=True,
+        bedrock_model_id="test-model",
+        s3_bucket_name="test-bucket",
+        bedrock_input_cost_per_million_tokens=0.06,
+        bedrock_output_cost_per_million_tokens=0.24,
+    )
+    s3_client = FakeS3Client()
+    storage = ImageStorageClient(config=config, s3_client=s3_client)
+    s3_client.objects[("test-bucket", "uploads/image.jpg")] = b"fake-image"
+    client = BedrockVisionClient(
+        config=config,
+        bedrock_client=FakeUnsupportedSceneBedrockClient(),
+        storage_client=storage,
+    )
+
+    result = client.analyze_cleanliness(
+        image_reference="s3://test-bucket/uploads/image.jpg"
+    )
+
+    assert result.classification == ClassificationLabel.BORDERLINE
+    assert result.confidence == 0.88
+    assert result.visible_reasons == ["Bright hallway", "No clutter"]
+    assert result.usage.estimated_cost_usd == 8.28e-05
 
 
 def test_parse_s3_uri_and_decode_base64_helpers() -> None:
