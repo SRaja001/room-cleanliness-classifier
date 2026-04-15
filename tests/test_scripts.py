@@ -8,5 +8,6 @@ def test_dynamodb_scripts_exist() -> None:
     assert Path("scripts/live_s3_rekognition_smoke_test.py").exists()
     assert Path("scripts/live_local_image_s3_rekognition_test.py").exists()
     assert Path("scripts/live_local_image_classify_test.py").exists()
+    assert Path("scripts/live_review_reporting_smoke_test.py").exists()
     assert Path("scripts/compare_cleanliness_options.py").exists()
     assert Path("scripts/run_named_test_batch.py").exists()

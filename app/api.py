@@ -7,6 +7,9 @@ from app.models.contracts import (
     ClassifyRoomRequest,
     ClassifyRoomResponse,
     HealthResponse,
+    PredictionListResponse,
+    PredictionRecordResponse,
+    PredictionSummaryResponse,
 )
 from app.services.factory import create_application_services
 
@@ -40,5 +43,26 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
             )
         except KeyError as exc:
             raise HTTPException(status_code=404, detail="Prediction not found.") from exc
+
+    @app.get("/predictions/{prediction_id}", response_model=PredictionRecordResponse)
+    def get_prediction(prediction_id: str) -> PredictionRecordResponse:
+        try:
+            return services.review_service.get_prediction(prediction_id=prediction_id)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail="Prediction not found.") from exc
+
+    @app.get("/predictions", response_model=PredictionListResponse)
+    def list_predictions(
+        limit: int = 20,
+        pending_only: bool = False,
+    ) -> PredictionListResponse:
+        return services.review_service.list_predictions(
+            limit=limit,
+            pending_only=pending_only,
+        )
+
+    @app.get("/reports/summary", response_model=PredictionSummaryResponse)
+    def get_prediction_summary() -> PredictionSummaryResponse:
+        return services.review_service.get_summary()
 
     return app

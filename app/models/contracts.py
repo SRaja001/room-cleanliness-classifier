@@ -95,3 +95,39 @@ class AdminReviewResponse(BaseModel):
     final_classification: ClassificationLabel
     admin_comment: str
     reviewer: str
+
+
+class PredictionRecordResponse(BaseModel):
+    prediction_id: str
+    image_reference: str
+    source: str | None = None
+    room_type: str | None = None
+    response: ClassifyRoomResponse
+    created_at: str
+    updated_at: str | None = None
+    admin_review: AdminReviewResponse | None = None
+
+
+class PredictionListResponse(BaseModel):
+    predictions: list[PredictionRecordResponse]
+
+
+class ClassificationBreakdown(BaseModel):
+    clean: int = 0
+    borderline: int = 0
+    dirty: int = 0
+
+
+class ReviewBreakdown(BaseModel):
+    clean: int = 0
+    borderline: int = 0
+    dirty: int = 0
+
+
+class PredictionSummaryResponse(BaseModel):
+    total_predictions: int
+    reviewed_predictions: int
+    pending_review: int
+    total_estimated_cost_usd: float = Field(default=0.0, ge=0.0)
+    classification_breakdown: ClassificationBreakdown
+    review_breakdown: ReviewBreakdown
