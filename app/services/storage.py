@@ -43,7 +43,8 @@ class ImageStorageClient:
 
     def infer_image_format(self, *, image_s3_uri: str) -> str:
         _, key = parse_s3_uri(image_s3_uri)
-        if key.lower().endswith(".png"):
+        content_type = infer_content_type_from_s3_uri(image_s3_uri)
+        if content_type == "image/png":
             return "png"
         return "jpeg"
 
@@ -73,3 +74,17 @@ def parse_s3_uri(s3_uri: str) -> tuple[str, str]:
     if parsed.scheme != "s3" or not parsed.netloc or not parsed.path:
         raise ValueError(f"Invalid S3 URI: {s3_uri}")
     return parsed.netloc, parsed.path.lstrip("/")
+
+
+def infer_content_type_from_s3_uri(s3_uri: str) -> str:
+    _, key = parse_s3_uri(s3_uri)
+    lower_key = key.lower()
+    if lower_key.endswith(".png"):
+        return "image/png"
+    if lower_key.endswith(".webp"):
+        return "image/webp"
+    if lower_key.endswith(".gif"):
+        return "image/gif"
+    if lower_key.endswith(".bmp"):
+        return "image/bmp"
+    return "image/jpeg"

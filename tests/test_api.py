@@ -15,6 +15,34 @@ def test_health_endpoint_returns_ok() -> None:
     }
 
 
+def test_root_redirects_to_staging_home() -> None:
+    client = TestClient(create_app())
+
+    response = client.get("/", follow_redirects=False)
+
+    assert response.status_code == 302
+    assert response.headers["location"] == "/staging"
+
+
+def test_staging_pages_render() -> None:
+    client = TestClient(create_app())
+
+    staging_home = client.get("/staging")
+    upload_page = client.get("/staging/upload")
+    queue_page = client.get("/staging/review-queue")
+    saved_reviews_page = client.get("/staging/saved-reviews")
+
+    assert staging_home.status_code == 200
+    assert "Room Cleanliness Tester" in staging_home.text
+    assert "Saved Reviews" in staging_home.text
+    assert upload_page.status_code == 200
+    assert "Upload And Classify" in upload_page.text
+    assert queue_page.status_code == 200
+    assert "Pending Predictions" in queue_page.text
+    assert saved_reviews_page.status_code == 200
+    assert "Reviewed Predictions" in saved_reviews_page.text
+
+
 def test_classify_endpoint_returns_contract_shape() -> None:
     client = TestClient(create_app())
 
@@ -162,3 +190,61 @@ def test_prediction_list_endpoint_can_filter_pending_reviews() -> None:
     predictions = response.json()["predictions"]
     assert len(predictions) == 1
     assert predictions[0]["prediction_id"] == second["prediction_id"]
+
+
+def test_prediction_list_endpoint_can_filter_reviewed_predictions() -> None:
+    client = TestClient(create_app())
+    first = client.post(
+        "/classify",
+        json={
+            "image_base64": "cGxhY2Vob2xkZXI=",
+            "image_role": "after",
+            "room_type": "bedroom",
+            "source": "test-suite",
+        },
+    ).json()
+    client.post(
+        "/predictions/" + first["prediction_id"] + "/review",
+        json={
+            "final_classification": "dirty",
+            "admin_comment": "Reviewed.",
+            "reviewer": "admin-user",
+        },
+    )
+
+    response = client.get("/predictions", params={"reviewed_only": "true"})
+
+    assert response.status_code == 200
+    predictions = response.json()["predictions"]
+    assert len(predictions) == 1
+    assert predictions[0]["prediction_id"] == first["prediction_id"]
+
+
+def test_staging_prediction_page_renders_for_any_prediction_id() -> None:
+    client = TestClient(create_app())
+
+    response = client.get("/staging/predictions/example-id")
+
+    assert response.status_code == 200
+    assert "Prediction example-id" in response.text
+    assert 'id="prediction-image"' in response.text
+    assert "Saved Review" in response.text
+    assert "Model Output" in response.text
+
+
+def test_prediction_image_endpoint_returns_not_found_when_preview_unavailable() -> None:
+    client = TestClient(create_app())
+    classify_response = client.post(
+        "/classify",
+        json={
+            "image_base64": "cGxhY2Vob2xkZXI=",
+            "image_role": "after",
+            "room_type": "bedroom",
+            "source": "test-suite",
+        },
+    )
+    prediction_id = classify_response.json()["prediction_id"]
+
+    response = client.get(f"/predictions/{prediction_id}/image")
+
+    assert response.status_code == 404

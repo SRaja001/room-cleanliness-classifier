@@ -34,11 +34,16 @@ class ReviewService:
         return _normalize_prediction_record(record)
 
     def list_predictions(
-        self, *, limit: int = 20, pending_only: bool = False
+        self,
+        *,
+        limit: int = 20,
+        pending_only: bool = False,
+        reviewed_only: bool = False,
     ) -> PredictionListResponse:
         records = self.repository.list_predictions(
             limit=limit,
             pending_only=pending_only,
+            reviewed_only=reviewed_only,
         )
         return PredictionListResponse(
             predictions=[_normalize_prediction_record(record) for record in records]

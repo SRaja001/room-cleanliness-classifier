@@ -127,3 +127,37 @@ def test_review_service_can_filter_pending_predictions() -> None:
 
     assert len(pending.predictions) == 1
     assert pending.predictions[0].prediction_id == second["prediction_id"]
+
+
+def test_review_service_can_filter_reviewed_predictions() -> None:
+    repository = InMemoryPredictionRepository()
+    first = repository.save_prediction(
+        {
+            "image_reference": "s3://bucket/1.jpg",
+            "response": {"classification": "dirty", "model_usage": {}},
+            "source": "test-suite",
+            "room_type": "bedroom",
+        }
+    )
+    repository.save_prediction(
+        {
+            "image_reference": "s3://bucket/2.jpg",
+            "response": {"classification": "clean", "model_usage": {}},
+            "source": "test-suite",
+            "room_type": "bedroom",
+        }
+    )
+    repository.save_admin_review(
+        prediction_id=first["prediction_id"],
+        review=AdminReviewRequest(
+            final_classification=ClassificationLabel.DIRTY,
+            admin_comment="Reviewed.",
+            reviewer="admin-user",
+        ),
+    )
+    review_service = ReviewService(repository=repository)
+
+    reviewed = review_service.list_predictions(limit=10, reviewed_only=True)
+
+    assert len(reviewed.predictions) == 1
+    assert reviewed.predictions[0].prediction_id == first["prediction_id"]

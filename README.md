@@ -1,6 +1,6 @@
 # Dirty Room Image Classifier
 
-This repository contains the planning and design documents for an internal MCP-backed service that analyzes an uploaded room image and classifies its cleanliness.
+This repository contains the MVP implementation and planning documents for an internal AWS-backed service that analyzes an uploaded room image and classifies its cleanliness.
 
 ## MVP Goal
 
@@ -16,7 +16,7 @@ The initial release is planning and documentation only. No runtime application c
 
 ## Current Phase
 
-The project is in the documentation and architecture phase. The immediate goal is to align product, engineering, and AWS setup decisions before opening implementation PRs.
+The project is in an internal staging and validation phase. The current goal is to make the service easy for product stakeholders to test with real images before any production rollout.
 
 ## Intended Stack
 
@@ -34,13 +34,16 @@ The project is in the documentation and architecture phase. The immediate goal i
 - [Architecture Plan](docs/architecture-plan.md)
 - [Implementation Roadmap](docs/implementation-roadmap.md)
 - [AWS Setup Checklist](docs/aws-setup-checklist.md)
+- [Implementation Learnings](docs/implementation-learnings.md)
+- [Optimization Playbook](docs/optimization-playbook.md)
+- [Staging Live Testing Plan](docs/staging-live-testing-plan.md)
 
 ## Planned Workflow
 
-1. Finalize documentation, requirements, and architecture decisions.
-2. Confirm AWS service access, IAM roles, and security constraints.
-3. Implement the MVP service and internal review workflow.
-4. Evaluate early predictions, tune thresholds, and decide whether more automation is safe.
+1. Keep the classifier, review workflow, and reporting path stable in staging.
+2. Expand the golden test set and improve prompt/policy accuracy.
+3. Expose a real staging endpoint and lightweight interfaces for image upload and result review.
+4. Run structured product testing before deciding what belongs in a production rollout.
 
 ## Working Principles
 
