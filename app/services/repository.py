@@ -19,7 +19,11 @@ class PredictionRepositoryProtocol(Protocol):
         ...
 
     def list_predictions(
-        self, *, limit: int, pending_only: bool = False
+        self,
+        *,
+        limit: int,
+        pending_only: bool = False,
+        reviewed_only: bool = False,
     ) -> list[dict[str, object]]:
         ...
 
@@ -66,11 +70,19 @@ class InMemoryPredictionRepository:
         return review_record
 
     def list_predictions(
-        self, *, limit: int, pending_only: bool = False
+        self,
+        *,
+        limit: int,
+        pending_only: bool = False,
+        reviewed_only: bool = False,
     ) -> list[dict[str, object]]:
         records = list(self.records.values())
-        if pending_only:
+        if pending_only and reviewed_only:
+            records = []
+        elif pending_only:
             records = [record for record in records if "admin_review" not in record]
+        elif reviewed_only:
+            records = [record for record in records if "admin_review" in record]
         records.sort(key=_record_sort_key, reverse=True)
         return records[:limit]
 
@@ -133,13 +145,21 @@ class DynamoDbPredictionRepository:
         return _from_dynamodb_compatible(attributes["admin_review"])
 
     def list_predictions(
-        self, *, limit: int, pending_only: bool = False
+        self,
+        *,
+        limit: int,
+        pending_only: bool = False,
+        reviewed_only: bool = False,
     ) -> list[dict[str, object]]:
         response = self.table.scan()
         items = [_from_dynamodb_compatible(item) for item in response.get("Items", [])]
         records = [item for item in items if item.get("record_type") == "prediction"]
-        if pending_only:
+        if pending_only and reviewed_only:
+            records = []
+        elif pending_only:
             records = [record for record in records if "admin_review" not in record]
+        elif reviewed_only:
+            records = [record for record in records if "admin_review" in record]
         records.sort(key=_record_sort_key, reverse=True)
         return records[:limit]
 

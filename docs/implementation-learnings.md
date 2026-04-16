@@ -332,6 +332,37 @@ The working delivery pattern for this project has been:
 
 This approach worked well and should remain the default.
 
+### Broader image-type support is easiest to handle in the browser first
+
+The staging upload experience initially felt too restrictive because it was effectively limited to JPEG and PNG.
+
+The most practical fix was:
+
+- allow broader image selection in the browser
+- normalize non-JPEG and non-PNG inputs to JPEG before sending them to the API
+
+Why this was valuable:
+
+- it improved the staging experience for product users immediately
+- it preserved the more stable backend path for Bedrock and Rekognition
+- it avoided prematurely broadening backend-format handling in ways that could be harder to validate
+
+### Live validation keeps surfacing issues unit tests would not have caught
+
+This project continued to benefit from real interactive testing after the core service was already working.
+
+During the staging increment, live use of the browser flow surfaced practical product issues that were not obvious from unit tests alone:
+
+- missing navigation to saved reviews
+- lack of image preview in the admin review flow
+- overly narrow upload-type support
+- gaps between stored data and discoverable user workflows
+
+Learning:
+
+- unit tests remain necessary, but they are not enough for a staging product surface
+- browser-based and end-to-end live validation should remain part of the delivery pattern for every UX-facing increment
+
 ## Current Recommended MVP Stack
 
 Based on the work completed so far, the current recommended MVP stack is:

@@ -155,3 +155,36 @@ def test_in_memory_repository_filters_pending_and_sorts_legacy_last() -> None:
     assert records[-1]["prediction_id"] == legacy["prediction_id"]
     assert len(pending_records) == 1
     assert pending_records[0]["prediction_id"] == legacy["prediction_id"]
+
+
+def test_in_memory_repository_filters_reviewed_predictions() -> None:
+    repository = InMemoryPredictionRepository()
+    first = repository.save_prediction(
+        {
+            "image_reference": "s3://bucket/reviewed.jpg",
+            "response": {"classification": "dirty", "model_usage": {}},
+            "source": "test-suite",
+            "room_type": "bedroom",
+        }
+    )
+    repository.save_prediction(
+        {
+            "image_reference": "s3://bucket/pending.jpg",
+            "response": {"classification": "clean", "model_usage": {}},
+            "source": "test-suite",
+            "room_type": "bedroom",
+        }
+    )
+    repository.save_admin_review(
+        prediction_id=first["prediction_id"],
+        review=AdminReviewRequest(
+            final_classification=ClassificationLabel.DIRTY,
+            admin_comment="Reviewed.",
+            reviewer="admin-user",
+        ),
+    )
+
+    reviewed_records = repository.list_predictions(limit=10, reviewed_only=True)
+
+    assert len(reviewed_records) == 1
+    assert reviewed_records[0]["prediction_id"] == first["prediction_id"]
